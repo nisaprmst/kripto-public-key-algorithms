@@ -78,32 +78,31 @@ function toASCII(message: string) {
     return arr.join('')
 }
 
-function encrypt(message: string) {
-    console.log("Generating two random primes...");
+function encrypt_rsa(message: string, n: BigInteger, e: BigInteger) {
+    /* console.log("Generating two random primes...");
     const p = randomPrime();
     const q = randomPrime();
-    // const p = BigNum(99991);
-    // const q = BigNum(99989);
     console.log("Random primes were choosen");
-    const {pub, pri} = generate_RSA(p, q);
+    const {pub, pri} = generate_RSA(p, q); */
     const arr_message = splitMessages(message);
-    console.log(pub);
-    console.log(pri);
+    // console.log(pub);
+    // console.log(pri);
     const out_arr = [];
     for (const chunks of arr_message) {
-        const val = BigNum(chunks, 16).modPow(pub.e, pub.n);
+        const val = BigNum(chunks, 16).modPow(e, n);
         out_arr.push(val.toString());
     }
-    // console.log('Encrypted data: ')
-    // console.log(out_arr);
+    return out_arr;
+    /* console.log('Encrypted data: ')
+    console.log(out_arr);
     const decrypted_arr = [];
     for (const chunks of out_arr) {
         decrypted_arr.push(BigNum(chunks).modPow(pri.d, pub.n).toString(16))
     }
-    // console.log('Decrypted data: ')
-    // console.log(decrypted_arr);
-    // console.log('Original data: ')
-    // console.log(arr_message)
+    console.log('Decrypted data: ')
+    console.log(decrypted_arr);
+    console.log('Original data: ')
+    console.log(arr_message)
     let total_corrupt = 0;
     for (let i = 0; i < decrypted_arr.length; i++) {
         if (decrypted_arr[i] === arr_message[i]) {
@@ -112,13 +111,23 @@ function encrypt(message: string) {
             console.log(`Index ${i} AAAAAAAAAAAAAAAAAAAAA`);
             total_corrupt++;
         }
+    } */
+}
+
+function decrypt_RSA(encrypted_arr: Array<string>, pub, pri) {
+    const decrypted_arr = [];
+    for (const chunk of encrypted_arr) {
+        decrypted_arr.push(BigNum(chunk).modPow(pri.d, pub.n).toString(16))
     }
+    return decrypted_arr;
+}
+
+function decryptedArr2String(decryptedArr: Array<string>) {
     let full_decrypted_string = '';
-    for (const decrypted of decrypted_arr) {
+    for (const decrypted of decryptedArr) {
         full_decrypted_string += toASCII(decrypted)
     }
-    console.log('Returned back to ASCII: ', full_decrypted_string);
-    console.log('Corrupt rate: ', total_corrupt/decrypted_arr.length)
+    return full_decrypted_string;
 }
 
 function diffieHellman(p: BigInteger, g: BigInteger) {
@@ -151,5 +160,17 @@ function demoDH() {
     console.log(secretAlice, secretBob)
 }
 
-demoDH()
+function demoRSA() {
+    const p = randomPrime();
+    const q = randomPrime();
+    const keys = generate_RSA(p, q);
+    const encryptedArr = encrypt_rsa(not_so_short_text, keys.pub.n, keys.pub.e);
+    console.log('Encrypted Number Array: ', encryptedArr);
+    const decryptedArr = decrypt_RSA(encryptedArr, keys.pub, keys.pri);
+    const decryptedString = decryptedArr2String(decryptedArr);
+    console.log('Decrypted string: ', decryptedString);
+}
+
+// demoDH()
+demoRSA()
 

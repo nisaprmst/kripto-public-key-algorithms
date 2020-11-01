@@ -6,8 +6,7 @@
   "author": "Arung Agamani",
   "license": "MIT",
   "dependencies": {
-    "big-integer": "^1.6.48",
-    "bignumber.js": "^9.0.1"
+    "big-integer": "^1.6.48"
   },
   "devDependencies": {
     "@types/big-integer": "^0.0.31",
