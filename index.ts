@@ -3,6 +3,8 @@
 import {BigInteger} from 'big-integer'
 import * as BigNum from 'big-integer'
 
+const base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
 function randomPrime() {
     let min = BigNum.one.shiftLeft(1023)
     let max = BigNum.one.shiftLeft(1024).prev()
@@ -55,6 +57,21 @@ function generate_RSA(p: BigInteger, q: BigInteger) {
         },
         pri : {
             d : pri
+        }
+    }
+}
+
+function RSA_keys_to_base64(pub, pri) {
+    const exponent = pub.e as BigInteger;
+    const modulus = pub.n as BigInteger;
+    const privateModulus = pri.d as BigInteger;
+    return {
+        pub: {
+            n: modulus.toString(64, base64Alphabet),
+            e: exponent.toString(64, base64Alphabet)
+        },
+        pri: {
+            d: privateModulus.toString(64, base64Alphabet)
         }
     }
 }
@@ -171,6 +188,20 @@ function demoRSA() {
     console.log('Decrypted string: ', decryptedString);
 }
 
-// demoDH()
-demoRSA()
+function demoGenRSA() {
+    const p = randomPrime();
+    const q = randomPrime();
+    const keys = generate_RSA(p,q);
+    const base64Keys = RSA_keys_to_base64(keys.pub, keys.pri);
+    console.log(base64Keys);
+}
 
+// demoDH()
+// demoRSA()
+
+// demoGenRSA()
+
+/* const a = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+const b = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+const c = a.multiply(b)
+console.log(c.toString()) */
