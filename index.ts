@@ -90,7 +90,15 @@ function buildPEMKey(pub) {
     const rsa_string = Buffer.concat([modulus_base64, mid_header_base64, exponent_base64]).toString('base64')
     // console.log(modulus_base64);
     // console.log(exponent_base64);
-    console.log(RSA_header+rsa_string);
+    // console.log(RSA_header+rsa_string);
+    return RSA_header + rsa_string;
+}
+
+function buildPriKey(pri) {
+    const modulus = pri.d as BigNum.BaseArray;
+    const modulus_base64 = Buffer.from(modulus.value)
+    const rsa_string = Buffer.concat([modulus_base64]).toString('base64')
+    return rsa_string
 }
 
 function rsa_pubkey_to_obj(pub_string: string) {
@@ -98,12 +106,28 @@ function rsa_pubkey_to_obj(pub_string: string) {
     if (pub_string.substr(0, RSA_header.length) === RSA_header) {
         const rsa_content = pub_string.slice(RSA_header.length);
         const rsa_bin = Buffer.from(rsa_content, 'base64');
-        const rsa_modulus = rsa_bin.subarray(0, 255);
-        const rsa_exp = rsa_bin.subarray(rsa_bin.length - 2, rsa_bin.length);
-        // const modulus = BigNum.fromArray(rsa_modulus., 256);
-        console.log(rsa_content);
+        const rsa_modulus = Buffer.from(rsa_bin.subarray(0, 256)).toJSON().data;
+        const rsa_exp = Buffer.from(rsa_bin.subarray(rsa_bin.length - 1, rsa_bin.length)).toJSON().data;
+        const modulus = BigNum.fromArray(rsa_modulus, 256);
+        const exponent = BigNum.fromArray(rsa_exp, 256);
+        // console.log(modulus);
+        // console.log(exponent)
+        // console.log(rsa_exp)
+        // console.log("modulus length: ", rsa_modulus.length)
+        return {
+            n: modulus,
+            e: exponent
+        }
     } else {
         console.log("Not a valid RSA Pub Key");
+    }
+}
+
+function rsa_prikey_to_obj(private_string: string) {
+    const rsa_bin = Buffer.from(private_string, 'base64');
+    const modulus = BigNum.fromArray(rsa_bin.toJSON().data);
+    return {
+        d: modulus
     }
 }
 
@@ -283,6 +307,16 @@ function demoGenRSA() {
     const keys = generate_RSA(p,q);
     const base64Keys = RSA_keys_to_base64(keys.pub, keys.pri);
     console.log(base64Keys);
+    return base64Keys;
+}
+
+function demoGeneratePubPriKey(base64Keys) {
+    const out_keys = {
+        pub: buildPEMKey(base64Keys.pub),
+        pri: buildPriKey(base64Keys.pri)
+    }
+    console.log("demogeneratepubprikeey: ", out_keys)
+    return out_keys
 }
 
 function demoMakePubRSA() {
@@ -310,7 +344,17 @@ function demoElgamal() {
 // demoGenRSA()
 // demoElgamal();
 
-rsa_pubkey_to_obj(RSAPubKey);
+// console.log(rsa_pubkey_to_obj(RSAPubKey))
+const rawKeys = demoGenRSA();
+const encodedkeys = demoGeneratePubPriKey(rawKeys);
+const decodedKeys = {
+    pub: rsa_pubkey_to_obj(encodedkeys.pub),
+    pri: rsa_prikey_to_obj(encodedkeys.pri)
+}
+// console.log("Raw", rawKeys)
+console.log(BigNum.fromArray(rawKeys.pub.n.value, 256))
+console.log("FromRaw", decodedKeys)
+
 
 // const a = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
 // const b = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
