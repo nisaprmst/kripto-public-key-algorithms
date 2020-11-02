@@ -2,8 +2,10 @@
 // import BigNum from 'bignumber.js';
 import {BigInteger} from 'big-integer'
 import * as BigNum from 'big-integer'
+import {Buffer} from 'buffer';
 
 const base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+const RSAPubKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAggkHbIGbXhM2in0tvxdYqq7dsdwI4MLoptwLw7zBdn34o+/3WUhksXKPmpmUC7g9490/z6ArV9m/O8iIoPRxklmx0FsxmY7XOLE7hLI9ZIt5+tRCgMW9lWo0AIJPn/hFOztTHWwzCdm9achB0TuTSF65HBz90rtRNYkrez4RnSWT9UhRBdN8INt2wU4vAuAJI959hCswKpmZz9He5JrPc2i5TYy2FEJzjl/M7RqCg0PW9rM9dk25OYDkJhei5TlBb1fcTxtI0GvwH/nHj63AiPbjWMQpMAjPFEk68sO3Irp4AIwOGvpg3EUjUKf3QqRY4sdLq8PvsEyYMYKlhhdCcQICxw==";
 
 function randomPrime() {
     let min = BigNum.one.shiftLeft(1023)
@@ -12,7 +14,7 @@ function randomPrime() {
     let prime;
     while (!isFound) {
         let num = BigNum.randBetween(min, max)
-        if (num.isProbablePrime(1024)) {
+        if (num.isProbablePrime(256)) {
             prime = num;
             isFound = true;
         }
@@ -67,12 +69,41 @@ function RSA_keys_to_base64(pub, pri) {
     const privateModulus = pri.d as BigInteger;
     return {
         pub: {
-            n: modulus.toString(64, base64Alphabet),
-            e: exponent.toString(64, base64Alphabet)
+            n: modulus.toArray(256),
+            e: exponent.toArray(256)
         },
         pri: {
-            d: privateModulus.toString(64, base64Alphabet)
+            d: privateModulus.toArray(256)
         }
+    }
+}
+
+function buildPEMKey(pub) {
+    const modulus = pub.n as BigNum.BaseArray;
+    const exponent = pub.e as BigNum.BaseArray;
+    const RSA_header = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA";
+    console.log(modulus.value)
+    const header_base64 = Buffer.from(RSA_header)
+    const modulus_base64 = Buffer.from(modulus.value)
+    const mid_header_base64 = Buffer.from([0x02, 0x02])
+    const exponent_base64 = Buffer.from(exponent.value)
+    const rsa_string = Buffer.concat([modulus_base64, mid_header_base64, exponent_base64]).toString('base64')
+    // console.log(modulus_base64);
+    // console.log(exponent_base64);
+    console.log(RSA_header+rsa_string);
+}
+
+function rsa_pubkey_to_obj(pub_string: string) {
+    const RSA_header = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA";
+    if (pub_string.substr(0, RSA_header.length) === RSA_header) {
+        const rsa_content = pub_string.slice(RSA_header.length);
+        const rsa_bin = Buffer.from(rsa_content, 'base64');
+        const rsa_modulus = rsa_bin.subarray(0, 255);
+        const rsa_exp = rsa_bin.subarray(rsa_bin.length - 2, rsa_bin.length);
+        // const modulus = BigNum.fromArray(rsa_modulus., 256);
+        console.log(rsa_content);
+    } else {
+        console.log("Not a valid RSA Pub Key");
     }
 }
 
@@ -253,6 +284,15 @@ function demoGenRSA() {
     const base64Keys = RSA_keys_to_base64(keys.pub, keys.pri);
     console.log(base64Keys);
 }
+
+function demoMakePubRSA() {
+    const p = randomPrime()
+    const q = randomPrime()
+    const keys = generate_RSA(p, q)
+    const base64keys = RSA_keys_to_base64(keys.pub, keys.pri)
+    buildPEMKey(base64keys.pub);
+}
+
 function demoElgamal() {
     console.log("");
     var keys = generate_elgamal();
@@ -266,11 +306,13 @@ function demoElgamal() {
 
 // demoDH()
 // demoRSA()
-
+// demoMakePubRSA()
 // demoGenRSA()
-demoElgamal();
+// demoElgamal();
 
-const a = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
-const b = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
-const c = a.multiply(b)
-console.log(c.toString())
+rsa_pubkey_to_obj(RSAPubKey);
+
+// const a = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+// const b = BigNum('100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
+// const c = a.multiply(b)
+// console.log(c.toString())
