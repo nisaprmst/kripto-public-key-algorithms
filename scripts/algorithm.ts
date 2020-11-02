@@ -3,7 +3,7 @@
 import {BigInteger} from 'big-integer'
 import * as BigNum from 'big-integer'
 
-function randomPrime() {
+export function randomPrime() {
     let min = BigNum.one.shiftLeft(1023)
     let max = BigNum.one.shiftLeft(1024).prev()
     let isFound = false;
@@ -18,7 +18,7 @@ function randomPrime() {
     return prime;
 }
 
-function randomPrimeFromBitSize(bitSize) {
+export function randomPrimeFromBitSize(bitSize) {
     let min = BigNum.one.shiftLeft(bitSize - 1)
     let max = BigNum.one.shiftLeft(bitSize).prev()
     let isFound = false;
@@ -34,11 +34,11 @@ function randomPrimeFromBitSize(bitSize) {
 }
 
 
-function totient(a: BigInteger, b: BigInteger): BigInteger {
+export function totient(a: BigInteger, b: BigInteger): BigInteger {
     return BigNum.lcm(a.prev(), b.prev());
 }
 
-function generate_RSA(p: BigInteger, q: BigInteger) {
+export function generate_RSA(p: BigInteger, q: BigInteger) {
     console.log("Generating keypairs");
     let t = totient(p, q);
     let n = p.multiply(q);
@@ -59,7 +59,7 @@ function generate_RSA(p: BigInteger, q: BigInteger) {
     }
 }
 
-function splitMessages(message: string){
+export function splitMessages(message: string){
     let arr = []
     for (let i = 0; i < message.length; i++) {
         let hex = Number(message.charCodeAt(i)).toString(16)
@@ -69,7 +69,7 @@ function splitMessages(message: string){
     return hexString.match(/.{1,512}/g)
 }
 
-function toASCII(message: string) {
+export function toASCII(message: string) {
     let arr = []
     for (let i = 0; i < message.length; i += 2) {
         let char = String.fromCharCode(parseInt(message.substr(i, 2), 16));
@@ -78,7 +78,7 @@ function toASCII(message: string) {
     return arr.join('')
 }
 
-function encrypt_rsa(message: string, n: BigInteger, e: BigInteger) {
+export function encrypt_rsa(message: string, n: BigInteger, e: BigInteger) {
     /* console.log("Generating two random primes...");
     const p = randomPrime();
     const q = randomPrime();
@@ -114,7 +114,7 @@ function encrypt_rsa(message: string, n: BigInteger, e: BigInteger) {
     } */
 }
 
-function decrypt_RSA(encrypted_arr: Array<string>, pub, pri) {
+export function decrypt_RSA(encrypted_arr: Array<string>, pub, pri) {
     const decrypted_arr = [];
     for (const chunk of encrypted_arr) {
         decrypted_arr.push(BigNum(chunk).modPow(pri.d, pub.n).toString(16))
@@ -122,7 +122,7 @@ function decrypt_RSA(encrypted_arr: Array<string>, pub, pri) {
     return decrypted_arr;
 }
 
-function decryptedArr2String(decryptedArr: Array<string>) {
+export function decryptedArr2String(decryptedArr: Array<string>) {
     let full_decrypted_string = '';
     for (const decrypted of decryptedArr) {
         full_decrypted_string += toASCII(decrypted)
@@ -130,7 +130,7 @@ function decryptedArr2String(decryptedArr: Array<string>) {
     return full_decrypted_string;
 }
 
-function diffieHellman(p: BigInteger, g: BigInteger) {
+export function diffieHellman(p: BigInteger, g: BigInteger) {
     const a = randomPrimeFromBitSize(8)
     const b = randomPrimeFromBitSize(8)
     const x = g.pow(a).mod(p)
@@ -138,11 +138,11 @@ function diffieHellman(p: BigInteger, g: BigInteger) {
     return {x,y, aliceKey: a, bobKey: b}
 }
 
-function getDiffieHellmanSecret(pub: BigInteger, pri: BigInteger, x: BigInteger) {
+export function getDiffieHellmanSecret(pub: BigInteger, pri: BigInteger, x: BigInteger) {
     return x.pow(pri).mod(pub)
 }
 
-function generate_elgamal() {
+export function generate_elgamal() {
     console.log("Generating elgamal keys...");
     var p = BigNum(0);
     while (!p.isPrime()) {
@@ -165,7 +165,7 @@ function generate_elgamal() {
         }
     };
 }
-function encryptElgamal(pub_key, message) {
+export function encryptElgamal(pub_key, message) {
     console.log("Encrypting...");
     const p = pub_key.p;
     var messages = [];
@@ -174,38 +174,47 @@ function encryptElgamal(pub_key, message) {
     }
     // console.log(messages);
     var k = BigNum.randBetween(1, p.minus(1));
-    var ctext = [];
+    var ctext = "";
     for (var i = 0; i < messages.length; i++) {
         var a = pub_key.g.modPow(k, p);
         var b = messages[i].multiply(pub_key.y.modPow(k, p)).mod(p);
-        ctext.push({
-            a,
-            b
-        });
+        ctext = ctext + a + '-' + b;
+        if (i < messages.length-1) {
+            ctext += ' ';
+        }
     }    
     return ctext;
 }
 
-function decryptElgamal(priv_key, messages) {
+export function decryptElgamal(priv_key, ctext) {
     console.log("Decrypting...");
     var plain = "";
     const p = priv_key.p;
+    const messages = ctext.split(' ');
+
     for (var i = 0; i < messages.length; i++) {
-        let a = messages[i].a;
-        let b = messages[i].b;
+        console.log(messages[i]);
+        const mes = messages[i].split('-');
+        console.log(mes[0]);
+        let a = BigNum(parseInt(mes[0]));
+        let b = BigNum(parseInt(mes[1]));
         let dec = b.multiply(a.modPow(priv_key.x, p).modInv(p)).mod(p); 
-        plain += String.fromCharCode(dec);
+        console.log(dec);
+        plain += String.fromCharCode(parseInt(dec.toString()));
     }
     return plain;
 }
 
+export function fromStr(ctext) {
+    var splitted = ctext.split(' ');
+}
 
 const short_text = "Aku benci javascript."
 const not_so_short_text="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 // console.log(splitMessages(long_text));
 // encryptElgamal(not_so_short_text)
 
-function demoDH() {
+export function demoDH() {
     console.log("Attempting DH Key Exchange")
     const p = randomPrimeFromBitSize(256)
     const q = randomPrimeFromBitSize(256)
@@ -218,18 +227,18 @@ function demoDH() {
     console.log(secretAlice, secretBob)
 }
 
-function demoRSA() {
+export function demoRSA() {
     const p = randomPrime();
     const q = randomPrime();
     const keys = generate_RSA(p, q);
-    const encryptedArr = encrypt_rsa(not_so_short_text, keys.pub.n, keys.pub.e);
+    const encryptedArr = encrypt_rsa(short_text, keys.pub.n, keys.pub.e);
     console.log('Encrypted Number Array: ', encryptedArr);
     const decryptedArr = decrypt_RSA(encryptedArr, keys.pub, keys.pri);
     const decryptedString = decryptedArr2String(decryptedArr);
     console.log('Decrypted string: ', decryptedString);
 }
 
-function demoElgamal() {
+export function demoElgamal() {
     console.log("");
     var keys = generate_elgamal();
     var ctext = encryptElgamal(keys.public, short_text);
@@ -244,3 +253,4 @@ function demoElgamal() {
 // demoRSA()
 demoElgamal();
 
+// export default generate_elgamal;
