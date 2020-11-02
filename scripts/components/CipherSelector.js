@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { randomPrime, decryptElgamal, encryptElgamal, generate_RSA, generate_elgamal } from "../algorithm";
+import { randomPrime, encrypt_rsa, decrypt_RSA, decryptElgamal, encryptElgamal, generate_RSA, generate_elgamal } from "../algorithm";
 
 const CipherSelector = ({setCipherData, handleSubmit}) => {
     const [cipher, setCipher] = useState('elgamal');
@@ -45,11 +45,18 @@ const CipherSelector = ({setCipherData, handleSubmit}) => {
             if (cipher === 'elgamal') {
                 const ctext = encryptElgamal(keys.public, textData);
                 document.getElementById('output-text').innerText = ctext;
+            } if (cipher === 'RSA') {
+                const ctext = encrypt_rsa(keys.public, textData);
+                document.getElementById('output-text').innerText = ctext;
             }
         } else {
+            const ctext = document.getElementById('output-text').value;
             if (cipher === 'elgamal') {
-                const ctext = document.getElementById('output-text').value;
                 const ptext = decryptElgamal(keys.private, ctext);
+                console.log(ptext);
+                document.getElementById('input-text').innerText = ptext;
+            } else if (cipher === 'RSA') {
+                const ptext = decrypt_RSA(keys.private, ctext);
                 console.log(ptext);
                 document.getElementById('input-text').innerText = ptext;
             }
